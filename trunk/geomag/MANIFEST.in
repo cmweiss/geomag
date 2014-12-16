@@ -1,1 +1,2 @@
-include geomag/WMM.COF
+include geomag/*.COF
+exclude geomag/.svn
