@@ -9,6 +9,7 @@ setup(
     author = "Christopher Weiss",
     author_email = "cmweiss@gmail.com",
     url = "http://geomag.googlecode.com/",
+    download_url = "//pypi.python.org/packages/source/g/geomag/geomag-0.9.2015.zip",
     keywords = ["magnetic", "variation", "declination"],
     classifiers = [
         "Programming Language :: Python",
