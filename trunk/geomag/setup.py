@@ -3,7 +3,7 @@ setup(
     name = "geomag",
     packages = ["geomag"],
     #data_files = [('geomag', ('geomag/WMM.COF',))],
-	package_data = {'geomag': ['WMM.COF','WMM2010.COF']},
+    package_data = {'geomag': ['WMM.COF','WMM2010.COF']},
     version = "0.9.2015",
     description = "Magnetic variation/declination",
     author = "Christopher Weiss",
