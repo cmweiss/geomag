@@ -4,6 +4,8 @@ Plots declination for +-70deg latitude and 260deg longditude
 TODO: Add Basemap example.
 '''
 import matplotlib.pyplot as plt
+import matplotlib.cm as cm
+from mpl_toolkits.basemap import Basemap
 from datetime import date
 import numpy as np
 
@@ -27,12 +29,16 @@ for i, _lon in enumerate(lon):
         x[j][i] = _lon
         y[j][i] = _lat
 
+plot_levels = np.arange(-90, 90, 5)
 
-plot_levels = np.arange(-90, 90, 10)
-fig = plt.figure()
-CS = plt.contour(x, y, world, plot_levels)
-plt.clabel(CS, inline=1, fontsize=10)
-plt.xlabel('East (degrees)')
-plt.ylabel('North (degrees)')
-fig.suptitle('Magneteic Declination')
+map = Basemap(llcrnrlon=lon[0], llcrnrlat=lat[0], urcrnrlon=lon[-1], urcrnrlat=lat[-1], projection='mill')
+map_x, map_y = map(np.asarray(x), np.asarray(y))
+contour_set = map.contour(map_x, map_y, world, plot_levels, linewidths=3, cmap=cm.jet)
+map.drawcoastlines(linewidth=1.25)
+map.fillcontinents(color='0.8')
+map.drawparallels(np.arange(lat[0],lat[-1],10),labels=[1,1,0,0])
+map.drawmeridians(np.arange(lon[0],lon[-1],20),labels=[0,0,0,1])
+
+plt.clabel(contour_set, fontsize='xx-small', inline_spacing=1.5, fmt='%1.0f')
+plt.suptitle('Magnetic Declination (degrees)')
 plt.show()
