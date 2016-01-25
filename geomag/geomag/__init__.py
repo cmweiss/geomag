@@ -10,7 +10,7 @@ Suggestions for improvements are appreciated.
 USAGE:
 >>> import geomag
 >>> geomag.declination(80,0)
--6.1335150785195536
+-3.382344140520556
 """
 
 from . import geomag
@@ -22,7 +22,7 @@ def declination(*args, **kargs):
     dlat = latitude in degrees
     dlon = longitude in degrees
     h = altitude in feet, default=0
-    calc_date = date for computing declination, default=today
+    time = date for computing declination, default=today
     """
     mag = __singleton__.GeoMag(*args, **kargs)
     return mag.dec
