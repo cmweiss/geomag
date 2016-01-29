@@ -35,6 +35,70 @@ def _convert_to_km(value, unit):
 
 DEFAULT_PATH = os.path.join(os.path.dirname(__file__), 'model_data/WMM.COF')
 
+class MageneticModelData:
+    ''' Class to hold the data and calculations from the file.'''
+    _last_calculated_datetime = None
+    max_order = degree_of_expansion = 12
+    array_size = max_order + 1
+    coeff={}
+    coefficient = _gen_square_array(array_size, 0.0)
+    coefficient_dot = _gen_square_array(array_size, 0.0)
+    time_adjusted_coefficients_cache = _gen_square_array(array_size, 0.0)
+    
+    def __init__(self, file):
+        with open(file) as world_magnetic_model_file:
+            for line in world_magnetic_model_file:
+                linevals = line.strip().split()
+                if len(linevals) == 3:
+                    self.epoch = float(linevals[0])
+                    self.model = linevals[1]
+                    self.modeldate = linevals[2]
+                elif len(linevals) == 6:
+                    degree_n = int(float(linevals[0]))
+                    order_m = int(float(linevals[1]))
+                    gauss_g = float(linevals[2])
+                    gauss_h = float(linevals[3])
+                    gauss_g_dot = float(linevals[4])
+                    gauss_h_dot = float(linevals[5])
+                    self.coefficient[order_m][degree_n] = gauss_g
+                    self.coefficient_dot[order_m][degree_n] = gauss_g_dot
+                    if (order_m != 0):
+                        self.coefficient[degree_n][order_m - 1] = gauss_h
+                        self.coefficient_dot[degree_n][order_m - 1] = gauss_h_dot
+        self._unnormalise_gauss_coefficients()
+        
+    def _unnormalise_gauss_coefficients(self):
+        ''' Convert Schmidt normalized Gauss coefficients to unnormalized '''
+        schmidt_norm = schmidt_quasi_normilisation(self.array_size)
+        for n in range(self.array_size):
+            for m in range(self.array_size):
+                if m <= n:
+                    self.coefficient[m][n] = schmidt_norm[m][n] * self.coefficient[m][n]
+                    self.coefficient_dot[m][n] = schmidt_norm[m][n] * self.coefficient_dot[m][n]
+                else:
+                    self.coefficient[m][n] = schmidt_norm[n + 1][m] * self.coefficient[m][n]
+                    self.coefficient_dot[m][n] = schmidt_norm[n + 1][m] * self.coefficient_dot[m][n]
+
+    def _time_adjust_gauss(self, time):
+        '''Time adjust the Gauss Coefficients
+        
+            There is a very basic cache happening here where if the time delta 
+            hasn't changed then the previous calculation is returned
+        '''
+        current_delta_time = _calculate_decimal_year(time) - self.epoch
+        if self._last_calculated_datetime != current_delta_time:
+            self._update_time_coefficients(current_delta_time)
+            self._last_calculated_datetime = current_delta_time
+        return self.time_adjusted_coefficients_cache
+
+    def _update_time_coefficients(self, delta_time):
+        for n in range(1, self.max_order + 1):
+            for m in range(0, n + 1):
+                self.time_adjusted_coefficients_cache[m][n] = (self.coefficient[m][n] +
+                                                         delta_time * self.coefficient_dot[m][n])
+                if (m != 0):
+                    self.time_adjusted_coefficients_cache[n][m - 1] = (self.coefficient[n][m - 1] +
+                                                                 delta_time * self.coefficient_dot[n][m - 1])
 
 class WorldMagneticModel:
     '''Class for calculating geomagnetic variation according to the world magnetic model
@@ -46,7 +110,18 @@ class WorldMagneticModel:
     -6.1335150785195536
 
     '''
+    
+    radius_earth = 6371200
 
+    _northerly_intensity = None
+    _easterly_intensity = None
+    _vertical_intensity = None
+    _horizontal_intensity = None
+    _total_intensity = None
+    _declination = None
+    _inclination = None
+    _grid_variation = None
+        
     def __init__(self, world_magnetic_model_filename=DEFAULT_PATH):
         '''__init__(self,world_magnetic_model_filename='WMM.COF')
         Loads a file containing the constants for the magnetic model.
@@ -62,77 +137,9 @@ class WorldMagneticModel:
         .. |mnt0| replace:: \ :sup:`m`:sub:`n`\ (t\ :sub:`0`\ )
 
         '''
-        self._last_calculated_datetime = None
-        self.radius_earth = 6371200
-        self.max_order = self.degree_of_expansion = 12
-        self.array_size = self.max_order + 1
-
-        self._northerly_intensity = None
-        self._easterly_intensity = None
-        self._vertical_intensity = None
-        self._horizontal_intensity = None
-        self._total_intensity = None
-        self._declination = None
-        self._inclination = None
-        self._grid_variation = None
-
-        self.coefficient = _gen_square_array(self.array_size, 0.0)
-        self.coefficient_dot = _gen_square_array(self.array_size, 0.0)
-        self.time_adjusted_coefficients = _gen_square_array(self.array_size, 0.0)
-
-        self._load_datafile(world_magnetic_model_filename)
-        self.k = recursion_constants(self.array_size)
-        self._unnormalise_gauss()
-
-    def _load_datafile(self, datafile):
-        with open(datafile) as world_magnetic_model_file:
-            for line in world_magnetic_model_file:
-                linevals = line.strip().split()
-                if len(linevals) == 3:
-                    self.epoch = float(linevals[0])
-                    self.model = linevals[1]
-                    self.modeldate = linevals[2]
-                elif len(linevals) == 6:
-                    degree_n = int(float(linevals[0]))
-                    order_m = int(float(linevals[1]))
-                    gauss_g = float(linevals[2])
-                    gauss_h = float(linevals[3])
-                    gauss_g_dot = float(linevals[4])
-                    gauss_h_dot = float(linevals[5])
-
-                    self.coefficient[order_m][degree_n] = gauss_g
-                    self.coefficient_dot[order_m][degree_n] = gauss_g_dot
-                    if (order_m != 0):
-                        self.coefficient[degree_n][order_m - 1] = gauss_h
-                        self.coefficient_dot[degree_n][order_m - 1] = gauss_h_dot
-
-    def _unnormalise_gauss(self):
-        ''' Convert Schmidt normalized Gauss coefficients to unnormalized '''
-        schmidt_norm = schmidt_quasi_normilisation(self.array_size)
-        for n in range(self.array_size):
-            for m in range(self.array_size):
-                if m <= n:
-                    self.coefficient[m][n] = schmidt_norm[m][n] * self.coefficient[m][n]
-                    self.coefficient_dot[m][n] = schmidt_norm[m][n] * self.coefficient_dot[m][n]
-                else:
-                    self.coefficient[m][n] = schmidt_norm[n + 1][m] * self.coefficient[m][n]
-                    self.coefficient_dot[m][n] = schmidt_norm[n + 1][m] * self.coefficient_dot[m][n]
-
-    def _time_adjust_gauss(self, time):
-        '''Time adjust the Gauss Coefficients'''
-        current_delta_time = _calculate_decimal_year(time) - self.epoch
-        if self._last_calculated_datetime != current_delta_time:
-            self._update_time_coefficients(current_delta_time)
-            self._last_calculated_datetime = current_delta_time
-
-    def _update_time_coefficients(self, delta_time):
-        for n in range(1, self.max_order + 1):
-            for m in range(0, n + 1):
-                self.time_adjusted_coefficients[m][n] = (self.coefficient[m][n] +
-                                                         delta_time * self.coefficient_dot[m][n])
-                if (m != 0):
-                    self.time_adjusted_coefficients[n][m - 1] = (self.coefficient[n][m - 1] +
-                                                                 delta_time * self.coefficient_dot[n][m - 1])
+        self.data = MageneticModelData(world_magnetic_model_filename)
+        self.k = recursion_constants(self.data.array_size)
+        
 
     @property
     def grid_variation(self):
@@ -193,11 +200,11 @@ class WorldMagneticModel:
         self.lat_lon = LatLon(dlat, dlon)
         spherical_latitude, _, radial = self.lat_lon.convert_spherical(altitude_in_km * 1000)
 
-        self._time_adjust_gauss(date)
+        self.time_adjusted_gauss = self.data._time_adjust_gauss(date)
 
-        b_radius, b_theta, b_phi = scalar_potential(self.time_adjusted_coefficients, self.lat_lon.lon_rad,
+        b_radius, b_theta, b_phi = scalar_potential(self.time_adjusted_gauss, self.lat_lon.lon_rad,
                                                     spherical_latitude,
-                                                    self.array_size, self.array_size,
+                                                    self.data.array_size, self.data.array_size,
                                                     radial, k=self.k)
         # Matching the method in the document
         b_radius = -b_radius

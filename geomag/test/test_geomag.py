@@ -36,9 +36,9 @@ CASES = [([80, 0, 0, DATE_IN_2015],
           RESULTS(5683.5, 14808.8, -50163, 15862, 52611.1, -72.45, 69, 309)),
          ]
 
-
 @pytest.fixture(scope="class", params=CASES)
 def setup_class(request):
+    print(request)
     request.cls.results = WMM.calc_mag_field(*request.param[0])
     request.cls.expected = request.param[1]
 

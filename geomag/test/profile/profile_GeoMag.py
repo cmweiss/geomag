@@ -8,6 +8,7 @@ https://jiffyclub.github.io/snakeviz/
 import cProfile
 import pstats
 from datetime import date
+
 from geomag import WorldMagneticModel
 
 

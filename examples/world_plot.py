@@ -1,7 +1,5 @@
 '''
 Plots declination for +-70deg latitude and 260deg longditude
-
-TODO: Add Basemap example.
 '''
 import matplotlib.pyplot as plt
 import matplotlib.cm as cm
