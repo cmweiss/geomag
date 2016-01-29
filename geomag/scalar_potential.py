@@ -4,7 +4,6 @@ import math
 import functools
 import operator
 
-
 def _gen_2d_array(size_x, size_y, default=None):
     return [[default] * size_x for _ in range(size_y)]
 
@@ -49,6 +48,8 @@ def schmidt_quasi_normilisation(max_n):
                 ((2 - k_delta) * n_minus_m_fact) / n_plus_m_fact) * double_fact / n_minus_m_fact
     return schmidt
 
+def tuplize_array(array):
+    return tuple(tuple(line) for line in array)
 
 def recursion_constants(max_n):
     ''' Calculates the values useful for performing the scalar potential algorithm '''
@@ -56,9 +57,9 @@ def recursion_constants(max_n):
     for n in range(1, max_n):
         for m in range(n + 1):
             k[m][n] = (((n - 1) * (n - 1)) - (m**2)) / ((2.0 * n - 1) * (2.0 * n - 3.0))
-    return k
+    return tuplize_array(k)
 
-
+@functools.lru_cache(maxsize=None)
 def associated_polynomials(cos_theta, sin_theta, max_n, max_m, k=None):
     '''Specific legendre legrende_polynomials for application in geomagnetic calculation
 
@@ -85,8 +86,8 @@ def associated_polynomials(cos_theta, sin_theta, max_n, max_m, k=None):
                 derivative_associated_poly[m][n] = (sin_theta * derivative_associated_poly[m][n - 1]
                                                     - cos_theta * previous_ass_poly
                                                     - current_k * derivative_associated_poly[m][n - 2])
+                
     return associated_poly, derivative_associated_poly
-
 
 def legrende_polynomials(max_n, v):
     ''' Returns the legendre polynominals
@@ -114,7 +115,7 @@ def multiple_angle(phi, max_n):
         last_cos = cos_n[i - 1]
         sin_n[i] = sin_phi * last_cos + cos_phi * last_sin
         cos_n[i] = cos_phi * last_cos - sin_phi * last_sin
-    return sin_n, cos_n
+    return tuple(sin_n), tuple(cos_n)
 
 
 def scalar_potential(coeff, phi, theta, max_n, max_m, radial_alt, ref_radius=6371200, k=None):
@@ -127,19 +128,18 @@ def scalar_potential(coeff, phi, theta, max_n, max_m, radial_alt, ref_radius=637
         cos_theta += 0.00000001
     sin_theta = math.sin(theta)
     sin_n, cos_n = multiple_angle(phi, max_n)
-    legendre_poly, legendre_poly_der = associated_polynomials(cos_theta, sin_theta, max_n, max_m, k)
+    legendre_poly, legendre_poly_derivative = associated_polynomials(cos_theta, sin_theta, max_n, max_m, k)
     a_over_r_pow = _altitude_ratios(ref_radius, radial_alt, max_n)
     magnetic_field = _calc_scalar_potential(
-        coeff,
-        cos_theta,
-        sin_n,
-        cos_n,
-        legendre_poly,
-        legendre_poly_der,
-        a_over_r_pow,
-        max_n)
+                                            coeff,
+                                            cos_theta,
+                                            sin_n,
+                                            cos_n,
+                                            legendre_poly,
+                                            legendre_poly_derivative,
+                                            a_over_r_pow,
+                                            max_n)
     return magnetic_field
-
 
 def _calc_scalar_potential(coeff, cos_theta, sin_n, cos_n, legendre_poly, legendre_poly_der, a_over_r_pow, max_n):
     ''' Calculates the partial scalar potential values'''
@@ -164,7 +164,7 @@ def _calc_scalar_potential(coeff, cos_theta, sin_n, cos_n, legendre_poly, legend
         B_phi = B_phi
     return B_r, B_theta, B_phi
 
-
+@functools.lru_cache(maxsize=None)
 def _altitude_ratios(ref_radius, altitude_radius, n):
     a_over_r = ref_radius / altitude_radius
-    return [a_over_r**(i + 2) for i in range(n)]
+    return tuple(a_over_r**(i + 2) for i in range(n))

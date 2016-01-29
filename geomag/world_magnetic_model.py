@@ -100,6 +100,7 @@ class MageneticModelData:
                     self.time_adjusted_coefficients_cache[n][m - 1] = (self.coefficient[n][m - 1] +
                                                                  delta_time * self.coefficient_dot[n][m - 1])
 
+
 class WorldMagneticModel:
     '''Class for calculating geomagnetic variation according to the world magnetic model
 
@@ -202,10 +203,13 @@ class WorldMagneticModel:
 
         self.time_adjusted_gauss = self.data._time_adjust_gauss(date)
 
-        b_radius, b_theta, b_phi = scalar_potential(self.time_adjusted_gauss, self.lat_lon.lon_rad,
+        b_radius, b_theta, b_phi = scalar_potential(self.time_adjusted_gauss, 
+                                                    self.lat_lon.lon_rad,
                                                     spherical_latitude,
-                                                    self.data.array_size, self.data.array_size,
-                                                    radial, k=self.k)
+                                                    self.data.array_size, 
+                                                    self.data.array_size,
+                                                    radial, 
+                                                    k=self.k)
         # Matching the method in the document
         b_radius = -b_radius
         b_theta = -b_theta
