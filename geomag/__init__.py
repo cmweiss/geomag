@@ -10,7 +10,7 @@ Suggestions for improvements are appreciated.
 USAGE:
 >>> import geomag
 >>> geomag.declination(80,0)
--3.382344140520556
+-6.1335150785195536
 """
 
 from . import geomag
@@ -22,10 +22,21 @@ def declination(*args, **kargs):
     dlat = latitude in degrees
     dlon = longitude in degrees
     h = altitude in feet, default=0
-    time = date for computing declination, default=today
+    calc_date = date for computing declination, default=today
     """
     mag = __singleton__.GeoMag(*args, **kargs)
     return mag.dec
+
+def all(*args, **kargs):
+    """Calculate magnetic declination, inclination,
+    and total intensity
+    dlat = latitude in degrees
+    dlon = longitude in degrees
+    h = altitude in feet, default=0
+    calc_date = date for computing data, default=today
+    """
+    mag = __singleton__.GeoMag(*args, **kargs)
+    return mag.dec, mag.dip, (mag.ti/1e3)
 
 def mag_heading(hdg, *args, **kargs):
     """Calculates the magnetic heading from a true heading.
