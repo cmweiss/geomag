@@ -45,6 +45,11 @@ def print_matrix(matrix, rows, columns):
         j = 0
         i += 1
 
+# Print header
+print("#ifndef _GEO_MAG_GENERATED_H_")
+print("#define _GEO_MAG_GENERATED_H_")
+print("")
+
 # Print defines
 print("#define SAMPLING_RES "     + str(resolution))
 print("#define SAMPLING_MIN_LAT " + str(start_lat))
@@ -68,6 +73,10 @@ print("static const int8_t magnitude_table[13][37] = \\")
 print("{")
 print_matrix(ti, lat_entries, lon_entries)
 print("};")
+
+# Closing definte
+print("")
+print("#endif /* _GEO_MAG_GENERATED_H_ */")
 
 # Matrix printing
 #np.set_printoptions(threshold='nan', linewidth='nan')
