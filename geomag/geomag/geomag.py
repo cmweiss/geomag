@@ -18,6 +18,12 @@
 import math, os, unittest
 from datetime import date
 
+# Allow finding the default WMM.COF by the frozen executable path
+import sys
+if hasattr(sys, "frozen"):
+    __file__ = os.path.relpath(sys.executable)
+
+
 class GeoMag:
 
     def GeoMag(self, dlat, dlon, h=0, time=date.today()): # latitude (decimal degrees), longitude (decimal degrees), altitude (feet), date
