@@ -4,7 +4,7 @@ import math
 try:
     import functools
 except ImportError:
-    from functools32 import functools32 as functools
+    import functools32 as functools
 import operator
 
 def _gen_2d_array(size_x, size_y, default=None):
