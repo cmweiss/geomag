@@ -18,7 +18,7 @@ def normalise_plus_minus_range(value, norm_range):
     norm_range_dict = {'lat': 90, 'lon': 180}
     try:
         valid_range = norm_range_dict[norm_range]
-        value = value % ([-1, 1][value > 0] * valid_range * 2)
+        value %= [-1, 1][value > 0] * valid_range * 2
     except KeyError:
         valid_range = norm_range
     if abs(value) > valid_range:

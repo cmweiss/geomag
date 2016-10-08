@@ -4,7 +4,7 @@ import math
 import os
 from datetime import date
 
-from .scalar_potential import scalar_potential, schmidt_quasi_normalisation, recursion_constants, _gen_2d_array
+from .scalar_potential import scalar_potential, schmidt_quasi_normalisation, recursion_constants
 from .latlon import LatLon
 
 
@@ -41,7 +41,7 @@ class MagneticModelData(object):
     _last_calculated_datetime = None
     max_order = degree_of_expansion = 12
     array_size = max_order + 1
-    coeff={}
+    coeff = {}
     coefficient = _gen_square_array(array_size, 0.0)
     coefficient_dot = _gen_square_array(array_size, 0.0)
     time_adjusted_coefficients_cache = _gen_square_array(array_size, 0.0)
@@ -80,7 +80,7 @@ class MagneticModelData(object):
                     self.coefficient[m][n] = schmidt_norm[n + 1][m] * self.coefficient[m][n]
                     self.coefficient_dot[m][n] = schmidt_norm[n + 1][m] * self.coefficient_dot[m][n]
 
-    def _time_adjust_gauss(self, time):
+    def time_adjust_gauss(self, time):
         """Time adjust the Gauss Coefficients
         
             There is a very basic cache happening here where if the time delta 
@@ -96,10 +96,10 @@ class MagneticModelData(object):
         for n in range(1, self.max_order + 1):
             for m in range(0, n + 1):
                 self.time_adjusted_coefficients_cache[m][n] = (self.coefficient[m][n] +
-                                                         delta_time * self.coefficient_dot[m][n])
-                if (m != 0):
+                                                               delta_time * self.coefficient_dot[m][n])
+                if m != 0:
                     self.time_adjusted_coefficients_cache[n][m - 1] = (self.coefficient[n][m - 1] +
-                                                                 delta_time * self.coefficient_dot[n][m - 1])
+                                                                       delta_time * self.coefficient_dot[n][m - 1])
 
 
 class WorldMagneticModel(object):
@@ -142,7 +142,6 @@ class WorldMagneticModel(object):
         self.data = MagneticModelData(world_magnetic_model_filename)
         self.k = recursion_constants(self.data.array_size)
         
-
     @property
     def grid_variation(self):
         return self._grid_variation
@@ -199,13 +198,11 @@ class WorldMagneticModel(object):
         if not -1 <= altitude_in_km <= 850:
             raise ValueError('World Magnetic Model is not valid outside the rage -1 to 850km')
 
-        self.lat_lon = LatLon(dlat, dlon)
-        spherical_latitude, _, radial = self.lat_lon.convert_spherical(altitude_in_km * 1000)
+        lat_lon = LatLon(dlat, dlon)
+        spherical_latitude, _, radial = lat_lon.convert_spherical(altitude_in_km * 1000)
 
-        self.time_adjusted_gauss = self.data._time_adjust_gauss(date)
-
-        b_radius, b_theta, b_phi = scalar_potential(self.time_adjusted_gauss, 
-                                                    self.lat_lon.lon_rad,
+        b_radius, b_theta, b_phi = scalar_potential(self.data.time_adjust_gauss(date),
+                                                    lat_lon.lon_rad,
                                                     spherical_latitude,
                                                     self.data.array_size, 
                                                     self.data.array_size,
@@ -218,7 +215,7 @@ class WorldMagneticModel(object):
         # ROTATE MAGNETIC VECTOR COMPONENTS FROM SPHERICAL TO
         # GEODETIC COORDINATES
         # */
-        delta_latitude_radians = spherical_latitude - self.lat_lon.lat_rad
+        delta_latitude_radians = spherical_latitude - lat_lon.lat_rad
         sin_delta_latitude = math.sin(delta_latitude_radians)
         cos_delta_latitude = math.cos(delta_latitude_radians)
 
@@ -229,10 +226,10 @@ class WorldMagneticModel(object):
         self._total_intensity = math.sqrt(self._horizontal_intensity**2 + self._vertical_intensity**2)
         self._declination = math.degrees(math.atan2(self._easterly_intensity, self._northerly_intensity))
         self._inclination = math.degrees(math.atan2(self._vertical_intensity, self._horizontal_intensity))
-        self._grid_variation = self._calculate_grid_variation()
+        self._grid_variation = self._calculate_grid_variation(lat_lon)
         return self
 
-    def _calculate_grid_variation(self):
+    def _calculate_grid_variation(self, lat_lon):
         """Calculate the magnetic grid variation
 
         Compute magnetic grid variation if the current
@@ -240,12 +237,12 @@ class WorldMagneticModel(object):
         (i.e. glat > +55 degrees or glat < -55 degrees)
         Otherwise, set magnetic grid variation to 0
         """
-        cur_lat = self.lat_lon.lat
+        cur_lat = lat_lon.lat
         grid_variation = self._declination
         if cur_lat > 55:
-            grid_variation -= self.lat_lon.lon
+            grid_variation -= lat_lon.lon
         elif cur_lat < -55:
-            grid_variation += self.lat_lon.lon
+            grid_variation += lat_lon.lon
         grid_variation %= 360
         return grid_variation
 
@@ -261,7 +258,7 @@ class WorldMagneticModel(object):
         return (hdg - self.declination + 360.0) % 360
 
     def field_vectors(self):
-        """ Returns the main magentic components: X, Y and Z"""
+        """ Returns the main magnetic components: X, Y and Z"""
         return self.return_array('X', 'Y', 'Z')
 
     def return_array(self, *variable_list):
