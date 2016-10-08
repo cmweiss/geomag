@@ -108,8 +108,8 @@ class WorldMagneticModel(object):
     Example Usage:
 
     >>> from geomag import WorldMagneticModel
-    >>> WorldMagneticModel().calc_mag_field(80,0).declination
-    -6.1335150785195536
+    >>> wmm = WorldMagneticModel()
+    >>> wmm.calc_mag_field(80,0).declination
 
     """
     
@@ -252,7 +252,6 @@ class WorldMagneticModel(object):
         Example Usage:
 
         >>> wmm.calc_mag_field(0,80).mag_heading(20)
-        24.0902559647
 
         """
         return (hdg - self.declination + 360.0) % 360
@@ -276,7 +275,6 @@ class WorldMagneticModel(object):
         Example Usage:
 
         >>> wmm.calc_mag_field(0,80).return_array('GV','I')
-        [355.90974403525763, -23.780099038516493]
 
         """
         variable_dict = {
