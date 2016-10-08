@@ -2,9 +2,9 @@ from __future__ import division
 
 import math
 try:
-    import functools
-except ImportError:
     import functools32 as functools
+except ImportError:
+    import functools
 import operator
 
 def _gen_2d_array(size_x, size_y, default=None):
