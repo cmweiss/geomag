@@ -1,4 +1,12 @@
 from distutils.core import setup
+
+import sys
+
+if sys.version_info >= (3, 2):
+    install_requires = []
+else:
+    install_requires = ["functools32"]
+
 setup(
     name = "geomag",
     packages = ["geomag"],
@@ -11,6 +19,7 @@ setup(
     url = "http://geomag.googlecode.com/",
     download_url = "//pypi.python.org/packages/source/g/geomag/geomag-0.9.2015.zip",
     keywords = ["magnetic", "variation", "declination"],
+    install_requires = install_requires,
     classifiers = [
         "Programming Language :: Python",
         "Development Status :: 4 - Beta",
