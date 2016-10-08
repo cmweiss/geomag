@@ -4,7 +4,7 @@ import math
 try:
     from functools import lru_cache
 except ImportError:
-    from functools32.functools_lru_cache import lru_cache
+    from functools32.functools32 import lru_cache
 import operator
 
 def _gen_2d_array(size_x, size_y, default=None):
