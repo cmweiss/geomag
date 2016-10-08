@@ -15,6 +15,11 @@ def test_initilisation(lat_lon, expected_lat_lon):
     assert(location.lon == expected_lat_lon[1])
 
 
+def test_error_on_wrong_unit():
+    with pytest.raises(Exception):
+        LatLon((0, 0), (0, 0), 'wrong_unit')
+
+
 @pytest.mark.parametrize(("value", "norm_range", "expected"), [
     (0, 'lat', 0),
     (0, 'lon', 0),

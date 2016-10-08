@@ -35,12 +35,12 @@ class LatLon(object):
         The range is limited to within +-90 and +-180 degrees
         """
 
-        if unit == 'degrees':
+        if unit in ['deg', 'degrees']:
             _latitude_deg = normalise_plus_minus_range(latitude, 'lat')
             _longitude_deg = normalise_plus_minus_range(longitude, 'lon')
             _latitude_rad = math.radians(_latitude_deg)
             _longitude_rad = math.radians(_longitude_deg)
-        elif unit == 'radians':
+        elif unit in ['rad', 'radians']:
             _latitude_deg = normalise_plus_minus_range(
                 math.degrees(latitude), 'lat')
             _longitude_deg = normalise_plus_minus_range(
@@ -48,7 +48,7 @@ class LatLon(object):
             _latitude_rad = math.radians(_latitude_deg)
             _longitude_rad = math.radians(_longitude_deg)
         else:
-            raise Exception
+            raise Exception('Incorrect unit specified, please use "deg", "degrees", "rad" or "radians"')
         self._lat = _latitude_deg
         self._lon = _longitude_deg
         self._lat_rad = _latitude_rad
