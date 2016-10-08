@@ -35,7 +35,8 @@ def _convert_to_km(value, unit):
 
 DEFAULT_PATH = os.path.join(os.path.dirname(__file__), 'model_data/WMM.COF')
 
-class MageneticModelData:
+
+class MagneticModelData(object):
     ''' Class to hold the data and calculations from the file.'''
     _last_calculated_datetime = None
     max_order = degree_of_expansion = 12
@@ -62,7 +63,7 @@ class MageneticModelData:
                     gauss_h_dot = float(linevals[5])
                     self.coefficient[order_m][degree_n] = gauss_g
                     self.coefficient_dot[order_m][degree_n] = gauss_g_dot
-                    if (order_m != 0):
+                    if order_m != 0:
                         self.coefficient[degree_n][order_m - 1] = gauss_h
                         self.coefficient_dot[degree_n][order_m - 1] = gauss_h_dot
         self._unnormalise_gauss_coefficients()
@@ -101,7 +102,7 @@ class MageneticModelData:
                                                                  delta_time * self.coefficient_dot[n][m - 1])
 
 
-class WorldMagneticModel:
+class WorldMagneticModel(object):
     '''Class for calculating geomagnetic variation according to the world magnetic model
 
     Example Usage:
@@ -138,7 +139,7 @@ class WorldMagneticModel:
         .. |mnt0| replace:: \ :sup:`m`:sub:`n`\ (t\ :sub:`0`\ )
 
         '''
-        self.data = MageneticModelData(world_magnetic_model_filename)
+        self.data = MagneticModelData(world_magnetic_model_filename)
         self.k = recursion_constants(self.data.array_size)
         
 

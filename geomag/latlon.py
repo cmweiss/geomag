@@ -85,7 +85,7 @@ class LatLon(object):
         return "({} N,{} W)".format(*self._lat_lon())
 
     def _lat_lon(self):
-        return(self.lat, self.lon)
+        return self.lat, self.lon
 
     def convert_spherical(self, altitude, unit='radians'):
         '''Converts to spherical co-ordinates
@@ -106,4 +106,4 @@ class LatLon(object):
         if unit == 'degrees':
             spherical_latitude = math.degrees(spherical_latitude)
             spherical_longditude = math.degrees(spherical_longditude)
-        return (spherical_latitude, spherical_longditude, r)
+        return spherical_latitude, spherical_longditude, r

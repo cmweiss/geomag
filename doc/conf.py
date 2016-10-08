@@ -51,8 +51,8 @@ master_doc = 'index'
 
 # General information about the project.
 project = 'GeoMag'
-copyright = '2015, Todd Dembrey'
-author = 'Todd Dembrey'
+copyright = '2015, Christopher Weiss'
+author = 'Christopher Weiss'
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
