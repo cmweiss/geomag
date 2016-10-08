@@ -7,21 +7,22 @@ except ImportError:
     import functools
 import operator
 
+
 def _gen_2d_array(size_x, size_y, default=None):
     return [[default] * size_x for _ in range(size_y)]
 
 
 def kronecker_delta(j, i):
-    ' Kronecker delta is defined as Iji = 1 if i = j and Iji = 0 otherwise'
+    """ Kronecker delta is defined as Iji = 1 if i = j and Iji = 0 otherwise"""
     return 1 if j == i else 0
 
 
 def double_factorial(n):
-    '''Returns the double factorial (n!!)
+    """Returns the double factorial (n!!)
 
-    Input must be an integer or greaer than 0 otherwise ValueError is raised
+    Input must be an integer or greater than 0 otherwise ValueError is raised
 
-    '''
+    """
     if int(n) != n:
         raise ValueError('n must be an integer')
     elif n < 0:
@@ -30,11 +31,11 @@ def double_factorial(n):
     return functools.reduce(operator.mul, range(start_number, n + 1, 2))
 
 
-def schmidt_quasi_normilisation(max_n):
-    '''Returns an array of the Schmidt Quasi-normilised values
+def schmidt_quasi_normalisation(max_n):
+    """Returns an array of the Schmidt Quasi-normalised values
 
     Array is symmetrical about the diagonal
-    '''
+    """
     schmidt = _gen_2d_array(max_n, max_n, 0.0)
     for n in range(max_n):
         for m in range(n + 1):
@@ -51,25 +52,28 @@ def schmidt_quasi_normilisation(max_n):
                 ((2 - k_delta) * n_minus_m_fact) / n_plus_m_fact) * double_fact / n_minus_m_fact
     return schmidt
 
+
 def tuplize_array(array):
     return tuple(tuple(line) for line in array)
 
+
 def recursion_constants(max_n):
-    ''' Calculates the values useful for performing the scalar potential algorithm '''
+    """ Calculates the values useful for performing the scalar potential algorithm """
     k = _gen_2d_array(max_n, max_n, 0)
     for n in range(1, max_n):
         for m in range(n + 1):
             k[m][n] = (((n - 1) * (n - 1)) - (m**2)) / ((2.0 * n - 1) * (2.0 * n - 3.0))
     return tuplize_array(k)
 
+
 @functools.lru_cache(maxsize=None)
 def associated_polynomials(cos_theta, sin_theta, max_n, max_m, k=None):
-    '''Specific legendre legrende_polynomials for application in geomagnetic calculation
+    """Specific legendre legrende_polynomials for application in geomagnetic calculation
 
     Recursion Constants (k) can be pre-calculated to improve performance, otherwise the
     function will perform this for you
 
-    '''
+    """
     if k is None:
         k = recursion_constants(max_n)
     associated_poly = _gen_2d_array(max_n, max_m, 0.0)
@@ -92,11 +96,12 @@ def associated_polynomials(cos_theta, sin_theta, max_n, max_m, k=None):
                 
     return associated_poly, derivative_associated_poly
 
+
 def legrende_polynomials(max_n, v):
-    ''' Returns the legendre polynominals
+    """ Returns the legendre polynomials
     Based on the algorithm here:
     http://uk.mathworks.com/help/symbolic/mupad_ref/orthpoly-legendre.html
-    '''
+    """
     poly = [1, v] + [0] * (max_n - 1)
     for n in range(2, max_n + 1):
         poly[n] = (2 * n - 1) / n * v * poly[n - 1] - (n - 1) / n * poly[n - 2]
@@ -104,9 +109,9 @@ def legrende_polynomials(max_n, v):
 
 
 def multiple_angle(phi, max_n):
-    ''' Returns the values of sin(nx) and cos(nx) series
+    """ Returns the values of sin(nx) and cos(nx) series
 
-    '''
+    """
     sin_phi = math.sin(phi)
     cos_phi = math.cos(phi)
     sin_n = [0] * max_n
@@ -122,10 +127,10 @@ def multiple_angle(phi, max_n):
 
 
 def scalar_potential(coeff, phi, theta, max_n, max_m, radial_alt, ref_radius=6371200, k=None):
-    '''
+    """
 
     ref_radius defaults to the radius of the earth in m.
-    '''
+    """
     cos_theta = math.cos(theta)
     if cos_theta is 0:
         cos_theta += 0.00000001
@@ -144,8 +149,9 @@ def scalar_potential(coeff, phi, theta, max_n, max_m, radial_alt, ref_radius=637
                                             max_n)
     return magnetic_field
 
+
 def _calc_scalar_potential(coeff, cos_theta, sin_n, cos_n, legendre_poly, legendre_poly_der, a_over_r_pow, max_n):
-    ''' Calculates the partial scalar potential values'''
+    """ Calculates the partial scalar potential values"""
     B_r = 0
     B_theta = 0
     B_phi = 0
@@ -166,6 +172,7 @@ def _calc_scalar_potential(coeff, cos_theta, sin_n, cos_n, legendre_poly, legend
     except ZeroDivisionError:
         B_phi = B_phi
     return B_r, B_theta, B_phi
+
 
 @functools.lru_cache(maxsize=None)
 def _altitude_ratios(ref_radius, altitude_radius, n):

@@ -36,6 +36,7 @@ CASES = [([80, 0, 0, DATE_IN_2015],
           RESULTS(5683.5, 14808.8, -50163, 15862, 52611.1, -72.45, 69, 309)),
          ]
 
+
 @pytest.fixture(scope="class", params=CASES)
 def setup_class(request):
     print(request)
@@ -44,7 +45,7 @@ def setup_class(request):
 
 
 @pytest.mark.usefixtures("setup_class")
-class TestGeoMag():
+class TestGeoMag:
 
     def test_northerly_intensity(self):
         assert(self.expected.X - self.results.Bx < 1)

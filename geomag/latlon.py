@@ -4,7 +4,7 @@ import math
 
 
 def normalise_plus_minus_range(value, norm_range):
-    '''Normalise a value to within a positive and negative range
+    """Normalise a value to within a positive and negative range
 
     **Parameters**
 
@@ -14,7 +14,7 @@ def normalise_plus_minus_range(value, norm_range):
            A number will limit the range between +/- that value. 'lat'
            and 'lon' will limit within +/-90 and 180 respectively.
 
-    '''
+    """
     norm_range_dict = {'lat': 90, 'lon': 180}
     try:
         valid_range = norm_range_dict[norm_range]
@@ -28,14 +28,12 @@ def normalise_plus_minus_range(value, norm_range):
 
 
 class LatLon(object):
-    '''Impliments a latitude Longitude class with conversion to spherical co-ords
-    '''
+    """Implements a latitude Longitude class with conversion to spherical co-ords"""
 
     def __init__(self, latitude, longitude, unit='degrees'):
-        '''
-        Performs conversion and stored both degrees and radians.
+        """Performs conversion and stored both degrees and radians.
         The range is limited to within +-90 and +-180 degrees
-        '''
+        """
 
         if unit == 'degrees':
             _latitude_deg = normalise_plus_minus_range(latitude, 'lat')
@@ -60,22 +58,22 @@ class LatLon(object):
 
     @property
     def lat(self):
-        'Return Latitude'
+        """Return Latitude"""
         return self._lat
 
     @property
     def lon(self):
-        'Return Longitude'
+        """Return Longitude"""
         return self._lon
 
     @property
     def lon_rad(self):
-        'Return Longitude'
+        """Return Longitude"""
         return self._lon_rad
 
     @property
     def lat_rad(self):
-        'Return Longitude'
+        """Return Longitude"""
         return self._lat_rad
 
     def __call__(self):
@@ -88,11 +86,10 @@ class LatLon(object):
         return self.lat, self.lon
 
     def convert_spherical(self, altitude, unit='radians'):
-        '''Converts to spherical co-ordinates
+        """Converts to spherical co-ordinates
 
         Returns in radians as standard
-
-        '''
+        """
         cur_lat_in_radians = self._lat_rad
         equator_radius = 6378137
         flattening = 1 / 298.257223563

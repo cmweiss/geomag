@@ -4,20 +4,20 @@ import math
 import os
 from datetime import date
 
-from .scalar_potential import scalar_potential, schmidt_quasi_normilisation, recursion_constants, _gen_2d_array
+from .scalar_potential import scalar_potential, schmidt_quasi_normalisation, recursion_constants, _gen_2d_array
 from .latlon import LatLon
 
 
 def _gen_square_array(size_x, default=None):
-    '''Creates a square array with x by x elements'''
+    """Creates a square array with x by x elements"""
     return [[default] * size_x for _ in range(size_x)]
 
 
 def _calculate_decimal_year(date_of_year):
-    '''
+    """
     .total_seconds() call makes the function 2/3 compliant. timedelta division was added in 3.2.
     This does limit the module to 2.7 as the minimum supported
-    '''
+    """
     year = date_of_year.year
     start_of_this_year = date(year, 1, 1)
     days_this_year = (date(year + 1, 1, 1) - start_of_this_year).total_seconds()
@@ -37,7 +37,7 @@ DEFAULT_PATH = os.path.join(os.path.dirname(__file__), 'model_data/WMM.COF')
 
 
 class MagneticModelData(object):
-    ''' Class to hold the data and calculations from the file.'''
+    """ Class to hold the data and calculations from the file."""
     _last_calculated_datetime = None
     max_order = degree_of_expansion = 12
     array_size = max_order + 1
@@ -69,8 +69,8 @@ class MagneticModelData(object):
         self._unnormalise_gauss_coefficients()
         
     def _unnormalise_gauss_coefficients(self):
-        ''' Convert Schmidt normalized Gauss coefficients to unnormalized '''
-        schmidt_norm = schmidt_quasi_normilisation(self.array_size)
+        """ Convert Schmidt normalized Gauss coefficients to unnormalized """
+        schmidt_norm = schmidt_quasi_normalisation(self.array_size)
         for n in range(self.array_size):
             for m in range(self.array_size):
                 if m <= n:
@@ -81,11 +81,11 @@ class MagneticModelData(object):
                     self.coefficient_dot[m][n] = schmidt_norm[n + 1][m] * self.coefficient_dot[m][n]
 
     def _time_adjust_gauss(self, time):
-        '''Time adjust the Gauss Coefficients
+        """Time adjust the Gauss Coefficients
         
             There is a very basic cache happening here where if the time delta 
             hasn't changed then the previous calculation is returned
-        '''
+        """
         current_delta_time = _calculate_decimal_year(time) - self.epoch
         if self._last_calculated_datetime != current_delta_time:
             self._update_time_coefficients(current_delta_time)
@@ -103,7 +103,7 @@ class MagneticModelData(object):
 
 
 class WorldMagneticModel(object):
-    '''Class for calculating geomagnetic variation according to the world magnetic model
+    """Class for calculating geomagnetic variation according to the world magnetic model
 
     Example Usage:
 
@@ -111,7 +111,7 @@ class WorldMagneticModel(object):
     >>> WorldMagneticModel().calc_mag_field(80,0).declination
     -6.1335150785195536
 
-    '''
+    """
     
     radius_earth = 6371200
 
@@ -125,7 +125,7 @@ class WorldMagneticModel(object):
     _grid_variation = None
         
     def __init__(self, world_magnetic_model_filename=DEFAULT_PATH):
-        '''__init__(self,world_magnetic_model_filename='WMM.COF')
+        """__init__(self,world_magnetic_model_filename='WMM.COF')
         Loads a file containing the constants for the magnetic model.
 
         The coefficients for the model are included for the year 2015 if no
@@ -138,7 +138,7 @@ class WorldMagneticModel(object):
 
         .. |mnt0| replace:: \ :sup:`m`:sub:`n`\ (t\ :sub:`0`\ )
 
-        '''
+        """
         self.data = MagneticModelData(world_magnetic_model_filename)
         self.k = recursion_constants(self.data.array_size)
         
@@ -176,7 +176,7 @@ class WorldMagneticModel(object):
         return self._vertical_intensity
 
     def calc_mag_field(self, dlat, dlon, altitude=0, date=date.today(), unit='ft'):
-        '''calc_mag_field(self, dlat, dlon, altitude=0, date=date.today(), unit='ft')
+        """calc_mag_field(self, dlat, dlon, altitude=0, date=date.today(), unit='ft')
 
         Calculates the magnetic field for a given latitude and longitude in decimal degrees.
 
@@ -193,7 +193,7 @@ class WorldMagneticModel(object):
             unit : {'ft','m','km'} - optional
                Unit for altitude
 
-        '''
+        """
         altitude_in_km = _convert_to_km(altitude, unit)
 
         if not -1 <= altitude_in_km <= 850:
@@ -233,13 +233,13 @@ class WorldMagneticModel(object):
         return self
 
     def _calculate_grid_variation(self):
-        '''Calculate the magnetic grid variation
+        """Calculate the magnetic grid variation
 
         Compute magnetic grid variation if the current
         geodetic position is in the arctic or antarctic
         (i.e. glat > +55 degrees or glat < -55 degrees)
         Otherwise, set magnetic grid variation to 0
-        '''
+        """
         cur_lat = self.lat_lon.lat
         grid_variation = self._declination
         if cur_lat > 55:
@@ -261,11 +261,11 @@ class WorldMagneticModel(object):
         return (hdg - self.declination + 360.0) % 360
 
     def field_vectors(self):
-        ''' Returns the main magentic components: X, Y and Z'''
+        """ Returns the main magentic components: X, Y and Z"""
         return self.return_array('X', 'Y', 'Z')
 
     def return_array(self, *variable_list):
-        '''Populates a return array with the requested variables, where:
+        """Populates a return array with the requested variables, where:
 
         | X = Northerly intensity
         | Y = Easterly intensity
@@ -281,7 +281,7 @@ class WorldMagneticModel(object):
         >>> wmm.calc_mag_field(0,80).return_array('GV','I')
         [355.90974403525763, -23.780099038516493]
 
-        '''
+        """
         variable_dict = {
             'X': self.Bx, 'Y': self.By, 'Z': self.Bz, 'H': self.Bh,
             'F': self.total_intensity, 'I': self.dip, 'D': self.dip,
@@ -290,6 +290,3 @@ class WorldMagneticModel(object):
         for variable in list(variable_list):
             return_list.append(variable_dict[variable])
         return return_list
-
-if __name__ == '__main__':
-    pass
