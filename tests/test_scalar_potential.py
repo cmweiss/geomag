@@ -23,11 +23,11 @@ def test_double_factorial(n, expected):
     ((3, 2), [1, 2, 5.5, 17]),
 ])
 def test_polynomials(in_array, expected_poly):
-    assert legrende_polynomials(*in_array) == expected_poly
+    assert legrende_polynomials(*in_array) == pytest.approx(expected_poly)
 
 
 @pytest.mark.parametrize(("in_array", "expected_poly"), [
-    ((1, 1), [1, 1]),
+    (({'cos_theta': 1, 'sin_theta': 1, 'max_n': 1, 'max_m': 1}), ([[1]], [[0]])),
 ])
 def test_associated_polynomials(in_array, expected_poly):
-    assert associated_polynomials(*in_array) == expected_poly
+    assert associated_polynomials(**in_array) == expected_poly
