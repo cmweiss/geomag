@@ -28,10 +28,10 @@ def normalise_plus_minus_range(value, norm_range):
 
 
 class LatLon(object):
-    '''Impliments a latitude Longditude class with conversion to spherical co-ords
+    '''Impliments a latitude Longitude class with conversion to spherical co-ords
     '''
 
-    def __init__(self, latitude, longditude, unit='degrees'):
+    def __init__(self, latitude, longitude, unit='degrees'):
         '''
         Performs conversion and stored both degrees and radians.
         The range is limited to within +-90 and +-180 degrees
@@ -39,22 +39,22 @@ class LatLon(object):
 
         if unit == 'degrees':
             _latitude_deg = normalise_plus_minus_range(latitude, 'lat')
-            _longditude_deg = normalise_plus_minus_range(longditude, 'lon')
+            _longitude_deg = normalise_plus_minus_range(longitude, 'lon')
             _latitude_rad = math.radians(_latitude_deg)
-            _longditude_rad = math.radians(_longditude_deg)
+            _longitude_rad = math.radians(_longitude_deg)
         elif unit == 'radians':
             _latitude_deg = normalise_plus_minus_range(
                 math.degrees(latitude), 'lat')
-            _longditude_deg = normalise_plus_minus_range(
-                math.degrees(longditude), 'lon')
+            _longitude_deg = normalise_plus_minus_range(
+                math.degrees(longitude), 'lon')
             _latitude_rad = math.radians(_latitude_deg)
-            _longditude_rad = math.radians(_longditude_deg)
+            _longitude_rad = math.radians(_longitude_deg)
         else:
             raise Exception
         self._lat = _latitude_deg
-        self._lon = _longditude_deg
+        self._lon = _longitude_deg
         self._lat_rad = _latitude_rad
-        self._lon_rad = _longditude_rad
+        self._lon_rad = _longitude_rad
 
         self._default_unit = unit
 
@@ -65,17 +65,17 @@ class LatLon(object):
 
     @property
     def lon(self):
-        'Return Longditude'
+        'Return Longitude'
         return self._lon
 
     @property
     def lon_rad(self):
-        'Return Longditude'
+        'Return Longitude'
         return self._lon_rad
 
     @property
     def lat_rad(self):
-        'Return Longditude'
+        'Return Longitude'
         return self._lat_rad
 
     def __call__(self):
@@ -102,8 +102,8 @@ class LatLon(object):
         z = (prime_vertical * (1 - eccentricity_squared) + altitude) * math.sin(cur_lat_in_radians)
         r = math.sqrt(p**2 + z**2)
         spherical_latitude = math.asin(z / r)
-        spherical_longditude = self.lon
+        spherical_longitude = self.lon
         if unit == 'degrees':
             spherical_latitude = math.degrees(spherical_latitude)
-            spherical_longditude = math.degrees(spherical_longditude)
-        return spherical_latitude, spherical_longditude, r
+            spherical_longitude = math.degrees(spherical_longitude)
+        return spherical_latitude, spherical_longitude, r

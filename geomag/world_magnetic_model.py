@@ -178,14 +178,14 @@ class WorldMagneticModel(object):
     def calc_mag_field(self, dlat, dlon, altitude=0, date=date.today(), unit='ft'):
         '''calc_mag_field(self, dlat, dlon, altitude=0, date=date.today(), unit='ft')
 
-        Calculates the magnetic field for a given latitude and longditude in decimal degrees.
+        Calculates the magnetic field for a given latitude and longitude in decimal degrees.
 
         **Parameters**
 
             dlat
                Latitude in degrees
             dlon
-               Longditude in degrees
+               Longitude in degrees
             altitude : optional
                Altitude at which to evaluate magnetic field
             date : datetime.date - optional
