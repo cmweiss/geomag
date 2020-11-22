@@ -19,12 +19,18 @@ import math, os, unittest
 from datetime import date
 
 class GeoMag:
+    def GeoMag(self, dlat, dlon, h=0, _date=date.today()): # latitude (decimal degrees), longitude (decimal degrees), altitude (feet), date
+        #time = date('Y') + date('z')/'days in year'
+        y = _date.year
+        dInYear = (date(y+1,1,1)-date(y,1,1)).days
+        time = y + float((_date - date(y,1,1)).days)/dInYear
 
-    def GeoMag(self, dlat, dlon, h=0, time=date.today()): # latitude (decimal degrees), longitude (decimal degrees), altitude (feet), date
-        #time = date('Y') + date('z')/365
-        time = time.year+((time - date(time.year,1,1)).days/365.0)
         alt = h/3280.8399
+        r = self.GeoMagSI(dlat,dlon,alt,time)
+        r.alt = h
+        return r
 
+    def GeoMagSI(self, dlat, dlon, alt=0, time=date.today().year): # latitude (decimal degrees), longitude (decimal degrees), altitude (km), date (as float)
         otime = oalt = olat = olon = -1000.0
 
         dt = time - self.epoch
@@ -176,22 +182,30 @@ class GeoMag:
         olat = glat
         olon = glon
 
-        class RetObj:
-            pass
-        retobj = RetObj()
-        retobj.dec = dec
-        retobj.dip = dip
-        retobj.ti = ti
-        retobj.bh = bh
-        retobj.bx = bx
-        retobj.by = by
-        retobj.bz = bz
-        retobj.lat = dlat
-        retobj.lon = dlon
-        retobj.alt = h
-        retobj.time = time
+        return GeoMag.RetObj(dec, dip, ti, bh, bx, by, bz, glat, glon, alt, time)
 
-        return retobj
+    class RetObj:
+        def __init__(self,dec,dip,ti,bh,bx,by,bz,lat,lon,alt,time):
+            self.dec = dec
+            self.dip = dip
+            self.ti = ti
+            self.bh = bh
+            self.bx = bx
+            self.by = by
+            self.bz = bz
+            self.lat = lat
+            self.lon = lon
+            self.alt = alt
+            self.time = time
+
+        def __eq__(self, other):
+            if not isinstance(other, GeoMag.RetObj):
+                # don't attempt to compare against unrelated types
+                raise NotImplementedError
+
+            return self.dec == other.dec and self.dip == other.dip and self.ti == other.ti and self.bh == other.bh and self.bx == other.bx and self.by == other.by and self.bz == other.bz
+        def __str__(self):
+            return "(alt=%f, time=%f, dec=%f, dip=%f, ti=%f, bh=%f, bx=%f, by=%f, bz=%f)" % (self.alt, self.time, self.dec, self.dip,self.ti,self.bh,self.bx,self.by,self.bz)
 
     def __init__(self, wmm_filename=None):
         if not wmm_filename:
@@ -279,31 +293,34 @@ class GeoMag:
                 m=m+D1
 
 class GeoMagTest(unittest.TestCase):
+    gm = GeoMag()
 
-    d1=date(2015,1,1)
-    d2=date(2017,7,2)
-    
-    test_values = (
-        # date, alt, lat, lon, var
-        (d1, 0, 80, 0,  -3.85),
-        (d1, 0, 0, 120, 0.57),
-        (d1, 0, -80, 240,  69.81),
-        (d1, 328083.99, 80, 0, -4.27),
-        (d1, 328083.99, 0, 120, 0.56),
-        (d1, 328083.99, -80, 240, 69.22),
-        (d2, 0, 80, 0, -2.75),
-        (d2, 0, 0, 120, 0.32),
-        (d2, 0, -80, 240, 69.58),
-        (d2, 328083.99, 80, 0, -3.17),
-        (d2, 328083.99, 0, 120, 0.32),
-        (d2, 328083.99, -80, 240, 69.00),
-    )
-    
+    def test_firstDayOfYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2020,1,1))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2020.)
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
+    def test_randomDayOfYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2020,2,29))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2020.+(59./366.))
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
+    def test_lastDayOfLeapYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2020,12,31))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2020.+(365./366.))
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
+    def test_lastDayOfNonLeapYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2021,12,31))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2021.+(364./365.))
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
+
     def test_declination(self):
-        gm = GeoMag()
-        for values in self.test_values:
-            calcval=gm.GeoMag(values[2], values[3], values[1], values[0])
-            self.assertAlmostEqual(values[4], calcval.dec, 2, 'Expected %s, result %s' % (values[4], calcval.dec))
+        wmm_test_filename = os.path.join(os.path.dirname(__file__), 'WMM2020_TEST_VALUES.txt')
+
+        with open(wmm_test_filename) as wmm_test_file:
+            for line in wmm_test_file:
+                values = line.strip().split()
+                if values[0] != '#': # exclude comment lines
+                    calcval=GeoMagTest.gm.GeoMagSI(float(values[2]), float(values[3]), float(values[1]), float(values[0]))
+                    self.assertAlmostEqual(float(values[4]), calcval.dec, 2, 'Expected %s, result %s' % (float(values[4]), calcval.dec))
 
 if __name__ == '__main__':
     unittest.main()
