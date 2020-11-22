@@ -176,22 +176,30 @@ class GeoMag:
         olat = glat
         olon = glon
 
-        class RetObj:
-            pass
-        retobj = RetObj()
-        retobj.dec = dec
-        retobj.dip = dip
-        retobj.ti = ti
-        retobj.bh = bh
-        retobj.bx = bx
-        retobj.by = by
-        retobj.bz = bz
-        retobj.lat = dlat
-        retobj.lon = dlon
-        retobj.alt = h
-        retobj.time = time
+        return GeoMag.RetObj(dec, dip, ti, bh, bx, by, bz, glat, glon, alt, time)
 
-        return retobj
+    class RetObj:
+        def __init__(self,dec,dip,ti,bh,bx,by,bz,lat,lon,alt,time):
+            self.dec = dec
+            self.dip = dip
+            self.ti = ti
+            self.bh = bh
+            self.bx = bx
+            self.by = by
+            self.bz = bz
+            self.lat = lat
+            self.lon = lon
+            self.alt = alt
+            self.time = time
+
+        def __eq__(self, other):
+            if not isinstance(other, GeoMag.RetObj):
+                # don't attempt to compare against unrelated types
+                raise NotImplementedError
+
+            return self.dec == other.dec and self.dip == other.dip and self.ti == other.ti and self.bh == other.bh and self.bx == other.bx and self.by == other.by and self.bz == other.bz
+        def __str__(self):
+            return "(alt=%f, time=%f, dec=%f, dip=%f, ti=%f, bh=%f, bx=%f, by=%f, bz=%f)" % (self.alt, self.time, self.dec, self.dip,self.ti,self.bh,self.bx,self.by,self.bz)
 
     def __init__(self, wmm_filename=None):
         if not wmm_filename:
