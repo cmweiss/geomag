@@ -24,7 +24,11 @@ class GeoMag:
         #time = date('Y') + date('z')/365
         time = time.year+((time - date(time.year,1,1)).days/365.0)
         alt = h/3280.8399
+        r = self.GeoMagSI(dlat,dlon,alt,time)
+        r.alt = h
+        return r
 
+    def GeoMagSI(self, dlat, dlon, alt=0, time=date.today().year): # latitude (decimal degrees), longitude (decimal degrees), altitude (km), date (as float)
         otime = oalt = olat = olon = -1000.0
 
         dt = time - self.epoch
@@ -288,6 +292,23 @@ class GeoMag:
 
 class GeoMagTest(unittest.TestCase):
     gm = GeoMag()
+
+    def test_firstDayOfYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2020,1,1))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2020.)
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
+    def test_randomDayOfYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2020,2,29))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2020.+(59./366.))
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
+    def test_lastDayOfLeapYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2020,12,31))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2020.+(365./366.))
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
+    def test_lastDayOfNonLeapYear(self):
+        res1 = GeoMagTest.gm.GeoMag(0,0,0,date(2021,12,31))
+        res2 = GeoMagTest.gm.GeoMagSI(0,0,0,2021.+(364./365.))
+        self.assertEqual(res1,res2,"Expected %s, result %s" % (res1,res2))
 
     def test_declination(self):
         wmm_test_filename = os.path.join(os.path.dirname(__file__), 'WMM2020_TEST_VALUES.txt')
